@@ -18,7 +18,7 @@
   <meta name="build" content="1783362796">
   
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Set Goals Gaming Academy</title>
+<title>Set Goals Gaming Academy v3.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -132,7 +132,7 @@ canvas{max-width:100%;height:auto}.race-word{background:var(--brown);color:var(-
 <div id="s-welcome" class="screen active">
   <div style="padding:32px 20px;max-width:420px;margin:0 auto">
     <h1 class="serif" style="font-size:2rem;text-align:center;margin-bottom:4px">✦ Set Goals</h1>
-    <p style="color:var(--caramel);text-align:center;margin-bottom:24px;font-size:.85rem">Gaming Academy</p>
+    <p style="color:var(--caramel);text-align:center;margin-bottom:24px;font-size:.85rem">Gaming Academy <span style="font-size:.7rem;opacity:.5">v3.1</span></p>
 
     <!-- Tabs -->
     <div style="display:flex;border-bottom:2px solid var(--sand);margin-bottom:20px">
@@ -148,6 +148,8 @@ canvas{max-width:100%;height:auto}.race-word{background:var(--brown);color:var(-
       <button class="btn" onclick="doLogin()">Login ✦</button>
       <p style="text-align:center;margin-top:12px;font-size:.8rem">
         <a href="#" onclick="switchTab('reset');return false;" style="color:var(--caramel);text-decoration:none">Forgot your password?</a>
+        &nbsp;·&nbsp;
+        <a href="#" onclick="if(confirm('Clear all saved data and start fresh?')){localStorage.clear();location.reload();}" style="color:#aaa;text-decoration:none;font-size:.75rem">Clear data</a>
       </p>
     </div>
 
@@ -2151,26 +2153,7 @@ var APOSTILAS=[
 // ═══════════════════════════════════════════════════════════════════════
 // APOSTILA PASSWORDS (SHA-256 hashes — plaintext never stored in code)
 // ═══════════════════════════════════════════════════════════════════════
-var PASSWORDS={
-  // au0 is FREE — no password required
-  'au1':'a98aefe5b96a1ce405166205d86169d56b7314bca8e38afea3e3d671332b7625',
-  'au2':'5ca15ed71170a058f220891ea32f4b75847e53cc38327e447c7e6c8a6334f3fd',
-  'au3':'18ec8b6b213207d750a410c77f08655141afaf6d51db752c99bcb4f66dd42deb',
-  'bah1':'fc2b02057ecf5be5eefb2692067534be0a74d073f6042d3e971ed462a9d2c8c1',
-  'bah2':'adce662a81581718f14c6ff77ca1856d1bd45c2d5a583b6add0fc8d227b504c2',
-  'eng':'cd1bdfc5afa79dd7e35b563547273ba8a4831d8b4cf2bf8fe013f12d708d87ca',
-  'ire':'f76f16a2897e2a8fe767480bdba3196c51f8ad17d5543187726bb768e6a99228',
-  'jam':'7b319e46114daef5fbd28dd78404708b09c69bc79fa381d0adf7d1094cd82f9a',
-  'nz1':'8071d75f2b7fd48e674c76b7685cb64eca0b34da610d69ea5984835d25e4c84b',
-  'nz2':'92b7436bffc17e38b5a3e083f5c443b340489bda67c16bdd7679ce35d8c4e573',
-  'nz3':'049c267e5172be0b05531f847e39e43b98e80b79e6fc0fd665bc31a816a465d9',
-  'nz4':'1c69919a37a4f3a05e36b6c588cfb3940d002deeb86875efeebb83dc88207343',
-  'sc1':'b5a061eea272357946a0d392036b537ed86f11fdf7dc323127d48aa5c8409b09',
-  'sc3':'d1440bb75c38ccda5125d9142e29d5fcf54a5fe6a1c92dd2b86821d254f18bdd',
-  'sa1':'58a76cd795d590baec1ffbcc5e8eb72bafde00c8ff2e9f959fc4572f9ac85a7c',
-  'sa2':'e84d4ad1d03d49a3c4f433a8493047313673bed67bb20bc1d0786d3a08e36703',
-  'sa3':'0467e93fe8e421c2dab2596623f10cd326fb24567ada5c5a422c42bdaa7e1f61',
-};
+
 
 // Hash function (SHA-256 via SubtleCrypto)
 
@@ -2277,7 +2260,6 @@ function showPasswordModal(ap, onSuccess){
   function attempt(){
     const val=inp.value.trim().toLowerCase();
     const correct=(PASSWORDS[ap.id]||'').toLowerCase();
-    console.log('PW check: id='+ap.id+' val='+val+' correct='+correct+' match='+(val===correct));
     if(val===correct){
       // Success
       pwAttempts[ap.id]={count:0,lockedUntil:0};
@@ -2357,7 +2339,8 @@ function doLogin(){
   const err=document.getElementById('login-err');
   if(!u||!p){err.textContent='Please fill in all fields.';return;}
   const user=getUser(u);
-  if(!user){err.textContent='Username not found.';return;}
+  console.log('Login attempt: u='+u+' user found='+(!!user)+' stored hash='+(user?user.hash:'none')+' calc hash='+hashPw(u,p));
+  if(!user){err.textContent='Username not found. Please register first.';return;}
   if(user.hash!==hashPw(u,p)){err.textContent='Wrong password.';return;}
   // Success — load profile
   if(!loadP(u)){
@@ -2510,29 +2493,23 @@ function renderLib(){
   //   - It's the first apostila after their current unlock level, OR
   //   - The previous apostila is complete (sequential progress)
   function canAttemptPassword(ap,idx){
-    // Safety: ensure unlocked array exists
     if(!Array.isArray(profile.unlocked))profile.unlocked=[];
-    // Already unlocked — no need for password
-    if(profile.unlocked.includes(ap.id))return false;
-    // au0 has no password
+    // au0 has no password — never needs attempt
     if(idx===0)return false;
-    // Find the highest explicitly unlocked apostila index
-    let highestUnlocked=0; // au0 is always base
+    // Already unlocked — no need
+    if(profile.unlocked.includes(ap.id))return false;
+    // Find highest unlocked index (ignoring au0 which is always free)
+    let highestUnlocked=-1;
     APOSTILAS.forEach((a,i)=>{
       if(profile.unlocked.includes(a.id))highestUnlocked=Math.max(highestUnlocked,i);
     });
-    // CASE 1: Student has no unlocks yet (highestUnlocked=0)
-    // Allow attempt for ANY apostila — teacher may give any password
-    if(highestUnlocked===0)return true;
-    // CASE 2: Attempting the NEXT apostila after current highest
-    // Require completion of current highest first
+    // No unlocks at all → allow ANY apostila (new student, teacher gave password)
+    if(highestUnlocked===-1)return true;
+    // Attempting the immediate next after current highest → require completion first
     if(idx===highestUnlocked+1){
       return isComplete(APOSTILAS[highestUnlocked]);
     }
-    // CASE 3: Attempting an apostila BEYOND next (skipping levels)
-    // Always allowed — teacher may give password to advanced student
-    if(idx>highestUnlocked+1)return true;
-    // CASE 4: Attempting a previous apostila (already accessible)
+    // Any other apostila (skipping ahead or going back) → always allow
     return true;
   }
 
